@@ -56,6 +56,7 @@ saxpyCuda(int N, float alpha, float* xarray, float* yarray, float* resultarray) 
     //
     // TODO: insert time here to begin timing only the kernel
     //
+    double startTimeKernel = CycleTimer::currentSeconds();
 
     // run saxpy_kernel on the GPU
     saxpy_kernel<<<blocks, threadsPerBlock>>>(N, alpha, device_x, device_y, device_result);
@@ -67,8 +68,8 @@ saxpyCuda(int N, float alpha, float* xarray, float* yarray, float* resultarray) 
     // ensure the kernel running on the GPU has completed.  (Otherwise
     // you will incorrectly observe that almost no time elapses!)
     //
-    //cudaThreadSynchronize();
-
+    cudaThreadSynchronize();
+    double endTimeKernel = CycleTimer::currentSeconds();
 
     //
     // TODO: copy result from GPU using cudaMemcpy
@@ -86,6 +87,9 @@ saxpyCuda(int N, float alpha, float* xarray, float* yarray, float* resultarray) 
     if (errCode != cudaSuccess) {
         fprintf(stderr, "WARNING: A CUDA error occured: code=%d, %s\n", errCode, cudaGetErrorString(errCode));
     }
+
+    double kernelDuration = endTimeKernel - startTimeKernel;
+    printf("Kernel time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * kernelDuration, toBW(totalBytes, kernelDuration));
 
     double overallDuration = endTime - startTime;
     printf("Overall time: %.3f ms\t\t[%.3f GB/s]\n", 1000.f * overallDuration, toBW(totalBytes, overallDuration));

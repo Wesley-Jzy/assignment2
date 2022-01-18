@@ -1,0 +1,25 @@
+Part 1:
+---------------------------------------------------------
+Found 3 CUDA devices
+Device 0: GeForce RTX 2080 Ti
+   SMs:        68
+   Global mem: 11019 MB
+   CUDA Cap:   7.5
+Device 1: GeForce RTX 2080 Ti
+   SMs:        68
+   Global mem: 11019 MB
+   CUDA Cap:   7.5
+Device 2: GeForce RTX 2080 Ti
+   SMs:        68
+   Global mem: 11019 MB
+   CUDA Cap:   7.5
+---------------------------------------------------------
+Kernel time: 0.484 ms		[461.468 GB/s]
+Overall time: 50.651 ms		[4.413 GB/s]
+Kernel time: 0.485 ms		[461.125 GB/s]
+Overall time: 47.807 ms		[4.675 GB/s]
+Kernel time: 0.482 ms		[463.648 GB/s]
+Overall time: 47.739 ms		[4.682 GB/s]
+
+记得上个assignment在我的i7 8700上跑是13ms，20 GB/s。好爽，2080ti是真的快啊。
+Overall主要花在数据拷贝上了，两次H->D和一次D->H。
