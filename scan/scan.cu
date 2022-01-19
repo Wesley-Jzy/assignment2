@@ -125,7 +125,16 @@ int find_repeats(int *device_input, int length, int *device_output) {
      * it requires that. However, you must ensure that the results of
      * find_repeats are correct given the original length.
      */    
-    return 0;
+
+    int cnt = 0;
+    for (int i = 0; i < length; i++) {
+        if (device_input[i] == device_input[i +1 ]) {
+            device_output[cnt] = i;
+            cnt++;
+        }
+    }
+
+    return cnt;
 }
 
 /* Timing wrapper around find_repeats. You should not modify this function.
