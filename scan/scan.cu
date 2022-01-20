@@ -13,6 +13,7 @@
 
 extern float toBW(int bytes, float sec);
 
+#define BLOCK_SIZE 1024
 
 /* Helper function to round up to a power of 2. 
  */
@@ -28,6 +29,52 @@ static inline int nextPow2(int n)
     return n;
 }
 
+__global__ void copy_kernel(const int *in, int length, int *out) {
+    int thread_x = threadIdx.x;
+
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        out[thread_x + i] = in[thread_x + i];
+    }
+}
+
+__global__ void upsweep_kernel(int N, int *out) {
+    int thread_x = threadIdx.x;
+
+    if (thread_x >= N) {
+        return;
+    }
+
+    for (int i = 1; i < N; i *= 2) {
+        for (int j = thread_x; j < N; j += BLOCK_SIZE) {
+            if (j % (2 * i) == 0) {
+                out[2 * i + j - 1] += out[i + j - 1];
+            }
+        }
+        __syncthreads();
+    }
+
+    out[N - 1] = 0;
+}
+
+__global__ void downsweep_kernel(int N, int *out) {
+    int thread_x = threadIdx.x;
+
+    if (thread_x >= N) {
+        return;
+    }
+
+    for (int i = N / 2; i >= 1; i /= 2) {
+        for (int j = thread_x; j < N; j += BLOCK_SIZE) {
+            if (j % (2 * i) == 0) {
+                int tmp = out[j + 2 * i - 1];
+                out[j + 2 * i - 1] += out[j + i - 1];
+                out[j + i - 1] = tmp;
+            }
+        }
+        __syncthreads();
+    }
+}
+
 void exclusive_scan(int* device_start, int length, int* device_result)
 {
     /* Fill in this function with your exclusive scan implementation.
@@ -39,6 +86,18 @@ void exclusive_scan(int* device_start, int length, int* device_result)
      * both the input and the output arrays are sized to accommodate the next
      * power of 2 larger than the input.
      */
+    dim3 dimBlock(BLOCK_SIZE, 1);
+    dim3 dimGrid(1, 1);
+
+    int N = nextPow2(length);
+
+    printf("Length: %d, N: %d\n", length, N);
+
+    copy_kernel<<<dimGrid, dimBlock>>>(device_start, length, device_result);
+    cudaThreadSynchronize();
+    upsweep_kernel<<<dimGrid, dimBlock>>>(N, device_result);
+    cudaThreadSynchronize();
+    downsweep_kernel<<<dimGrid, dimBlock>>>(N, device_result);
 }
 
 /* This function is a wrapper around the code you will write - it copies the
@@ -126,15 +185,7 @@ int find_repeats(int *device_input, int length, int *device_output) {
      * find_repeats are correct given the original length.
      */    
 
-    int cnt = 0;
-    for (int i = 0; i < length; i++) {
-        if (device_input[i] == device_input[i +1 ]) {
-            device_output[cnt] = i;
-            cnt++;
-        }
-    }
-
-    return cnt;
+    return 0;
 }
 
 /* Timing wrapper around find_repeats. You should not modify this function.
